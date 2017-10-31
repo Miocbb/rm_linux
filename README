@@ -1,16 +1,17 @@
-Description:
+Brief:
 This is a script used to remove files on linux system
 to a recycle bin, the similar functionality of recycle
 bin in Windows system.
 
-Usage:
+
+Install:
 (1). git clone this project into a place you like, and navigate
 to the root of this project.
 (2). make "rm_limux/run.py" executable by run "chmod +x run.py"
 (3). create an alias for the execute path of "./run.py".
 
 
-Note:
+Description:
 (1). A recycle bin named ".rycycle_bin" will be created under your home
 path.
 
@@ -24,3 +25,18 @@ created by the recorded time, that is ".day_hour_minute_second_microsecond".
 
 (4). A log file, ".log", will be created in each folder under ".recycle_bin",
 and it will be updated with the deleted file information.
+
+
+Usage:
+rm alias is suggested for this script, so that original 'rm' of linux can be
+overwrited.
+
+Command illustration
+$: rm -f Files # permanently remove files or dirs.
+$: rm Files    # temporary remove files or dirs into ~/.recycle_bin.
+
+To clean files existed inside ~/.recycle_bin, you can either use
+$: rm -f Files
+or just
+$: rm Files
+The ~/.recycle_bin/Date_Folder/.log file will be updated after your cleaning.

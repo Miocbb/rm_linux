@@ -69,7 +69,6 @@ def get_parser(argv_pst, argv_opt):
     -h: show help information.
     -f: remove file permanently.
 
-
     return list(__arg_pst), list(__arg_opt)
         1. a list of valid path in which every element will be
         moved to the recycle bin.
@@ -137,6 +136,34 @@ def write_log(path_folder, name, source, time):
     f.close()
 
 
+def update_log(path_file):
+    """
+    update the log file in ~/.recycle_bin/Date_Folder/.log
+    when the user is cleanning the recycle bin.
+
+    delete the record information in log file when the file
+    is cleaned out from recycle bin.
+    """
+    file_name = get_file_name(path_file)
+    # remove .log file, no need to update log file
+    if file_name == '.log':
+        return
+    log_name  = path_file.rstrip(file_name) + '.log'
+    # update .log when user is cleanning content
+    # in the ~/.recycle_bin/Date_Folder/
+    if os.path.isfile(log_name):
+        f = open(log_name, 'r+')
+        f_content = f.readlines()
+        f.seek(0)
+        del_line = [line for line in f if file_name in line ]
+        f.seek(0)
+        for line in f_content:
+            if line not in del_line:
+                f.write(line)
+        f.truncate()
+        f.close
+
+
 def main():
     arg_pst, arg_opt = get_argument()
     __arg_pst, __arg_opt = get_parser(arg_pst, arg_opt)
@@ -149,33 +176,46 @@ def main():
         SigExit("rm: no valid file name.")
 
     # start doing rm
-    # path of recycle bin
+    # abs_path of recycle bin
     path_recycle = os.path.expanduser('~') + '/.recycle_bin'
     time=datetime.now()
     time_str = time.strftime('%Y-%m-%d (%H:%M:%S)')
-    # path of folders in recycle_bin based on year and month
+    # abs_path of folders in recycle_bin based on year and month
     path_folder = path_recycle + '/' + str(time.year) +'_' + str(time.month)
     # time extension with ".time.day_time.hour_time_min_time.sec_time.microsec"
     exts_time = '.' + str(time.day) + '_' + str(time.hour)\
                 + '_' + str(time.minute) + '_' + str(time.second)\
                 + '_' + str(time.microsecond)
 
-    if __arg_pst: # rm or mv file when file list is not empty
-        if '-f' in __arg_opt: # permanently delete files
+    if __arg_pst: # start rm or mv file
+        if '-f' in __arg_opt: # permanently delete any files
             for i in __arg_pst:
                 _delete(i)
+                # update .log file if deleted file is inside ~/.recycle_bin/
+                i_abs_path_file = os.path.abspath(i)
+                if i_abs_path_file.startswith(path_recycle+'/'):
+                    update_log(i_abs_path_file)
         else: # move files to recycle_bin and add time extension to files
-            pwd = os.getcwd()
             if not os.path.exists(path_recycle):
                 os.mkdir(path_recycle)
             if not os.path.exists(path_folder):
                 os.mkdir(path_folder)
             for i in __arg_pst:
-                name = get_file_name(i)
-                new_name = name + exts_time
-                path_new_file = path_folder + '/' + new_name
-                _move(i, path_new_file)
-                write_log(path_folder, new_name, os.path.abspath(i), time_str)
+                i_abs_path_file = os.path.abspath(i)
+                if i_abs_path_file == path_recycle:
+                    SigExit("rm: terminated.\n"
+                            "Recycle bin is proteced. Use rm -f to delete")
+                # clean recycle bin
+                # rm file which is in the recycle bin already
+                if i_abs_path_file.startswith(path_recycle+'/'):
+                    _delete(i)
+                    update_log(i_abs_path_file)
+                else: # temporaly rm file
+                    name = get_file_name(i)
+                    new_name = name + exts_time
+                    path_new_file = path_folder + '/' + new_name
+                    _move(i, path_new_file)
+                    write_log(path_folder, new_name, i_abs_path_file, time_str)
 
 
 if __name__ == '__main__':
