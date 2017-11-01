@@ -132,7 +132,7 @@ def write_log(path_folder, name, source, time):
         print >>f, ""
         f.close()
     f = open(path_log, 'a')
-    print >>f, "{:22} : {} : {}".format(time, name, source)
+    print >>f, "{:22}   {}   {}".format(time, name, source)
     f.close()
 
 
@@ -179,11 +179,11 @@ def main():
     # abs_path of recycle bin
     path_recycle = os.path.expanduser('~') + '/.recycle_bin'
     time=datetime.now()
-    time_str = time.strftime('%Y-%m-%d (%H:%M:%S)')
+    time_str = time.strftime('%Y-%m-%d(%H:%M:%S)')
     # abs_path of folders in recycle_bin based on year and month
     path_folder = path_recycle + '/' + str(time.year) +'_' + str(time.month)
     # time extension with ".time.day_time.hour_time_min_time.sec_time.microsec"
-    exts_time = '.' + str(time.day) + '_' + str(time.hour)\
+    exts_time = str(time.day) + '_' + str(time.hour)\
                 + '_' + str(time.minute) + '_' + str(time.second)\
                 + '_' + str(time.microsecond)
 
@@ -212,7 +212,7 @@ def main():
                     update_log(i_abs_path_file)
                 else: # temporaly rm file
                     name = get_file_name(i)
-                    new_name = name + exts_time
+                    new_name = exts_time + ":" + name
                     path_new_file = path_folder + '/' + new_name
                     _move(i, path_new_file)
                     write_log(path_folder, new_name, i_abs_path_file, time_str)
