@@ -74,8 +74,13 @@ def get_parser(argv_pst, argv_opt):
         moved to the recycle bin.
         2. a list of valid optional arguments.
     """
+    # individual acceptable optional arguments.
+    # add two dummy opt arguments ('-rf', '-fr') to be compatible with
+    # linux "rm -rf".
+    valid_opt = ('-h', '--help', '-r', '-f', '-rf', '-fr')
     invalid_pst = []
     __arg_pst = []
+    __arg_opt = []
     # filter argv_pst
     for i in argv_pst:
         # os.path.expanduser will replace '~' with
@@ -89,15 +94,17 @@ def get_parser(argv_pst, argv_opt):
         else:
             invalid_pst.append(i)
     if invalid_pst:
-        print 'rm: file "{}" not existed.'\
+        print 'safe_rm: file "{}" not existed.'\
         .format(combine_string(invalid_pst))
-
+    __arg_pst = list(set(__arg_pst))
+    
     # filter argv_opt
-    reminder_opt = list(set(argv_opt)-set(['-h', '--help', '-f']))
+    reminder_opt = list(set(argv_opt) - set(valid_opt))
     if reminder_opt:
         string = combine_string(reminder_opt)
-        SigExit('rm: optional arguments "{}" invalid.'.format(string))
-    return list(set(__arg_pst)), list(set(argv_opt)-set(['--help']))
+        SigExit('safe_rm: optional arguments "{}" invalid.'.format(string))
+    __arg_opt = list(set(argv_opt) - set(['--help']))
+    return __arg_pst, __arg_opt
 
 
 def get_file_name(path):
@@ -173,7 +180,7 @@ def main():
         echo_help()
         sys.exit()
     if not __arg_pst:
-        SigExit("rm: no valid file name.")
+        SigExit("safe_rm: no valid file name.")
 
     # start doing rm
     # abs_path of recycle bin
@@ -203,7 +210,7 @@ def main():
             for i in __arg_pst:
                 i_abs_path_file = os.path.abspath(i)
                 if i_abs_path_file == path_recycle:
-                    SigExit("rm: terminated.\n"
+                    SigExit("safe_rm: terminated.\n"
                             "Recycle bin is proteced. Use rm -f to delete")
                 # clean recycle bin
                 # rm file which is in the recycle bin already
