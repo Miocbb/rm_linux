@@ -5,47 +5,52 @@ bin in Windows system.
 
 
 Install:
-(1). git clone this project into a place you like, and navigate
-to the root of this project.
-(2). make "rm_limux/run.py" executable by run "chmod +x run.py"
-(3). create an alias for the execute path of "./run.py".
+1. git clone this project into a place you like, and navigate
+   to the root of this project.
+2. make "rm_limux/run.py" executable by run "chmod +x run.py"
+3. create an alias for the execute path of "./run.py".
 
 
 Description:
-(1). A recycle bin named ".rycycle_bin" will be created under your home
-path.
+1. A recycle bin named ".rycycle_bin" will be created under your home path.
 
-(2). The time when you deleted your each file will be recorded.
-According to the recorded time, all the deleted files will be categoried
-into deffirent folders under ".rycycle_bin". The name of folders in
-".recycle_bin" is named by the year and month from the recorded time.
+2. The time when you deleted your each file will be recorded.
+   According to the recorded time, all the deleted files will be categoried
+   into deffirent folders under "~/.rycycle_bin". The name of folders in
+   "~/.recycle_bin" is named by the year and the month according to recorded time.
 
-(3). Files thrown into the recycle_bin will be stamped by an extension
-created by the recorded time, that is ".day_hour_minute_second_microsecond".
+3. Files thrown into the recycle_bin will be stamped by an prefix
+   created by the recorded time, that is "day_hour_minute_second_microsecond:".
 
-(4). A log file, ".log", will be created in each folder under ".recycle_bin",
-and it will be updated with the deleted file information.
+4. A log file, ".log", will be created in each folder under "~/.recycle_bin" to
+   record the deleting details information. Log file will be updated everytime when
+   files are moved in.
 
 
 Usage:
-rm alias is suggested for this script, so that original 'rm' of linux can be
+'rm' alias is suggested for this script, so that original 'rm' of linux can be
 overwrited.
 
 Command illustration
-$: rm -f Files  # permanently remove files or dirs.
-$: rm Files     # temporary remove files or dirs into ~/.recycle_bin.
+1. Absolute and relative path of files or dirs are supported. "*" expression is also
+   supported for specifying a class of files which match with certain pattern.
+2. The usage of optional arguments is the same as linux 'rm' command. The position
+   of optional arguments can be any position after 'rm' command. Combination
+   optional arguments are supported. To pemanently delete files, use '-f' flag.
+   To recursively delete directories, use '-r' flag.
+   -->Example:
+   $: rm [-f, -fr, -rf] Files Dirs # pemanently delete dirs and/or files.
 
-Note: since this program treat files and directories equally, the action of recursively removing
-directories is ignored. However, to make this program compatible with original linux 'rm'
-command at certain rare conditions, optional arguments '-r', '-rf' and '-fr' are also acceptable,
-but the recursively remove argument part, 'r', is set to be dummy and will be ignored.
-Below are examples.
-$: rm Files -rf # this is eqaul to 'rm Files -f'
-$: rm Files -fr # this is eqaul to 'rm Files -f'
-$: rm Files -r  # this is eqaul to 'rm Files'
+   If '-f' not specified, the files will be moved to ~/.recycle_bin, instead of deleted.
+   -->Example:
+   $: rm [-r] Files Dirs    # temporary remove files or dirs into ~/.recycle_bin.
 
-To clean files existed inside ~/.recycle_bin, you can either use
-$: rm -f Files
-or just
-$: rm Files
-The ~/.recycle_bin/Date_Folder/.log file will be updated after your cleaning.
+3. To clean and delete files or dirs existed inside ~/.recycle_bin, you can either specify
+   '-f' flag or not to achieve cleanning.
+   $: rm -f ~/.recycle_bin/files
+   $: rm -f -r ~/.recycle_bin/dirs
+   or just
+   $: rm  ~/.recycle_bin/files
+   $: rm  -r ~/.recycle_bin/dirs
+
+   The ~/.recycle_bin/Date_Folder/.log file will be updated after your cleaning.

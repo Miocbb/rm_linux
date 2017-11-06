@@ -22,7 +22,7 @@ def echo_help():
     """
     print help information.
     """
-    print "Usage: rm [-h] [-f] f_name, ..."
+    print "Usage: rm [-h] [-f] [-r] files, dirs ..."
     print ""
     print "Safely remove files on Linux system to recycle bin,"
     print "which is similar to windows recycle bin functionality."
@@ -32,7 +32,8 @@ def echo_help():
     print "{:20s}  {}".format("", "file name is required.")
     print "Optional arguments:"
     print "{:20s}  {}".format("-h --help", "show this help message and exit.")
-    print "{:20s}  {}".format("-f", "force to delete file or dir permanently.")
+    print "{:20s}  {}".format("-f", "force to delete file or directory permanently.")
+    print "{:20s}  {}".format("-r", "recursively remove directory.")
 
 
 def combine_string(str_list):
@@ -40,6 +41,22 @@ def combine_string(str_list):
     for i in str_list:
         rst += i+", "
     return rst.rstrip(', ')
+
+
+def get_file_name(path):
+    return path.split('/')[-1]
+
+
+def _move(path1, path2):
+    shutil.move(path1, path2)
+
+
+def _delete(path):
+    if os.path.isdir(path):
+        shutil.rmtree(path)
+        #shutil.rmtree does not work for symbolic link to a dir
+    elif os.path.isfile(path):
+        os.remove(path)
 
 
 def get_argument():
@@ -66,7 +83,9 @@ def get_parser(argv_pst, argv_opt):
                shell expression is supported.
     Optional argument
     -h: show help information.
-    -f, [-rf, -fr]: remove file permanently.
+    -f: remove file permanently.
+    -r: recursively remove directory.
+    -rf, -fr: supported.
     
     Note: recursively remove opt argument ('-r') is acceptable and will not
     raise error, but it will be ignored since files and directorise
@@ -102,8 +121,8 @@ def get_parser(argv_pst, argv_opt):
     __arg_pst = list(set(__arg_pst))
 
     # deal with '-r' contained opt args.
-    if set(argv_opt) & set(valid_opt):
-        argv_opt.append('-f')
+    if set(argv_opt) & set(['-rf', '-fr']):
+        argv_opt.extend(['-f', '-r'])
     # filter argv_opt
     reminder_opt = list(set(argv_opt) - set(valid_opt))
     if reminder_opt:
@@ -111,22 +130,6 @@ def get_parser(argv_pst, argv_opt):
         SigExit('safe_rm: optional arguments "{}" invalid.'.format(string))
     __arg_opt = list(set(argv_opt) - set(['--help']))
     return __arg_pst, __arg_opt
-
-
-def get_file_name(path):
-    return path.split('/')[-1]
-
-
-def _move(path1, path2):
-    shutil.move(path1, path2)
-
-
-def _delete(path):
-    if os.path.isdir(path):
-        shutil.rmtree(path)
-        #shutil.rmtree does not work for symbolic link to a dir
-    elif os.path.isfile(path):
-        os.remove(path)
 
 
 def write_log(path_folder, name, source, time):
@@ -203,6 +206,12 @@ def main():
     if __arg_pst: # start rm or mv file
         if '-f' in __arg_opt: # permanently delete any files
             for i in __arg_pst:
+                if os.path.isdir(i): # skip a dir if -r not specified.
+                    if '-r' not in __arg_opt:
+                        dir_n = os.path.relpath(i)
+                        print "safe_rm: cannot rm: {}, {} is a directory."\
+                                .format(dir_n, dir_n)
+                        continue
                 _delete(i)
                 # update .log file if deleted file is inside ~/.recycle_bin/
                 i_abs_path_file = os.path.abspath(i)
@@ -217,13 +226,25 @@ def main():
                 i_abs_path_file = os.path.abspath(i)
                 if i_abs_path_file == path_recycle:
                     SigExit("safe_rm: terminated.\n"
-                            "Recycle bin is proteced. Use rm -f to delete")
+                            "Recycle bin is proteced. Use 'rm -rf' to delete")
                 # clean recycle bin
                 # rm file which is in the recycle bin already
                 if i_abs_path_file.startswith(path_recycle+'/'):
+                    if os.path.isdir(i): # skip a dir in recycle bin if -r not used.
+                        if '-r' not in __arg_opt:
+                            dir_n = os.path.relpath(i)
+                            print "safe_rm: cannot rm: {}, {} is a directory."\
+                                    .format(dir_n, dir_n)
+                            continue
                     _delete(i)
                     update_log(i_abs_path_file)
                 else: # temporaly rm file
+                    if os.path.isdir(i): # skip a dir in recycle bin if -r not used.
+                        if '-r' not in __arg_opt:
+                            dir_n = os.path.relpath(i)
+                            print "safe_rm: cannot rm: {}, {} is a directory."\
+                                    .format(dir_n, dir_n)
+                            continue
                     name = get_file_name(i)
                     new_name = exts_time + ":" + name
                     path_new_file = path_folder + '/' + new_name
