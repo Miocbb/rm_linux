@@ -64,10 +64,13 @@ def get_parser(argv_pst, argv_opt):
     Posotional argument
     file, ...: name of the file needed removed.
                shell expression is supported.
-
     Optional argument
     -h: show help information.
-    -f: remove file permanently.
+    -f, [-rf, -fr]: remove file permanently.
+    
+    Note: recursively remove opt argument ('-r') is acceptable and will not
+    raise error, but it will be ignored since files and directorise
+    are treated equally in this program.
 
     return list(__arg_pst), list(__arg_opt)
         1. a list of valid path in which every element will be
@@ -97,7 +100,10 @@ def get_parser(argv_pst, argv_opt):
         print 'safe_rm: file "{}" not existed.'\
         .format(combine_string(invalid_pst))
     __arg_pst = list(set(__arg_pst))
-    
+
+    # deal with '-r' contained opt args.
+    if set(argv_opt) & set(valid_opt):
+        argv_opt.append('-f')
     # filter argv_opt
     reminder_opt = list(set(argv_opt) - set(valid_opt))
     if reminder_opt:

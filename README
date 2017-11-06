@@ -31,18 +31,18 @@ Usage:
 rm alias is suggested for this script, so that original 'rm' of linux can be
 overwrited.
 
-Note: There are only two actions implimented in this program for removing files,
-either delete file permanently or move file into recycle bin, no matter the target
-file is just a normal file or a directory.
-
 Command illustration
 $: rm -f Files  # permanently remove files or dirs.
 $: rm Files     # temporary remove files or dirs into ~/.recycle_bin.
 
-To make this program be compatible with original linux 'rm' command at certain rare conditions,
-optional arguments '-r', '-rf' and '-fr' are also acceptable, but they are just setted to be
-dummy arguments, which means specifying these will not raise error but they will be ignored.
-$: rm Files -rf # -rf will be ignored, this is equal to 'rm Files'.
+Note: since this program treat files and directories equally, the action of recursively removing
+directories is ignored. However, to make this program compatible with original linux 'rm'
+command at certain rare conditions, optional arguments '-r', '-rf' and '-fr' are also acceptable,
+but the recursively remove argument part, 'r', is set to be dummy and will be ignored.
+Below are examples.
+$: rm Files -rf # this is eqaul to 'rm Files -f'
+$: rm Files -fr # this is eqaul to 'rm Files -f'
+$: rm Files -r  # this is eqaul to 'rm Files'
 
 To clean files existed inside ~/.recycle_bin, you can either use
 $: rm -f Files
