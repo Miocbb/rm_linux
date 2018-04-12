@@ -8,6 +8,7 @@ bin in Windows system.
 import os
 import sys
 import shutil
+import subprocess
 from glob import glob
 from datetime import datetime
 
@@ -16,7 +17,6 @@ def SigExit(*string):
     for i in string:
         print i,
     sys.exit()
-
 
 def echo_help():
     """
@@ -35,21 +35,33 @@ def echo_help():
     print "{:20s}  {}".format("-f", "force to delete file or directory permanently.")
     print "{:20s}  {}".format("-r", "recursively remove directory.")
 
-
 def combine_string(str_list):
     rst = ""
     for i in str_list:
         rst += i+", "
     return rst.rstrip(', ')
 
-
 def get_file_name(path):
     return path.split('/')[-1]
 
+def get_file_mount_name(path):
+    path = os.path.abspath(os.path.expanduser(path))
+    cmd_df = ['df', '-P', '-T', path]
+    cmd_tail = ['tail', '-n', '+2']
+    p1 = subprocess.Popen(cmd_df, stdout=subprocess.PIPE)
+    p2 = subprocess.Popen(cmd_tail, stdin=p1.stdout, stdout=subprocess.PIPE)
+    p1.stdout.close()
+    output= p2.communicate()[0]
+    rst = output.split()[-1]
+    if rst != '/':
+        rst = rst.rstrip('/')
+    return rst
+
+def check_if_mounted_file(path):
+    return get_file_mount_name(path) != '/'
 
 def _move(path1, path2):
     shutil.move(path1, path2)
-
 
 def _delete(path):
     if os.path.isdir(path):
@@ -57,7 +69,6 @@ def _delete(path):
         #shutil.rmtree does not work for symbolic link to a dir
     elif os.path.isfile(path):
         os.remove(path)
-
 
 def get_argument():
     """
@@ -72,7 +83,6 @@ def get_argument():
         else:
             argv_pst.append(i)
     return argv_pst, argv_opt
-
 
 def get_parser(argv_pst, argv_opt):
     """
@@ -131,7 +141,6 @@ def get_parser(argv_pst, argv_opt):
     __arg_opt = list(set(argv_opt) - set(['--help']))
     return __arg_pst, __arg_opt
 
-
 def write_log(path_folder, name, source, time):
     """
     write log file (.log) to the folders in recycle bin.
@@ -139,6 +148,9 @@ def write_log(path_folder, name, source, time):
     file records its original path and time of deleted.
     """
     path_log = path_folder + '/.log'
+    if check_if_mounted_file(source):
+        source = source[len(get_file_mount_name(source)):]
+        source = '~' + source
     if not os.path.isfile(path_log):
         f = open(path_log, 'w')
         print >>f, time
@@ -150,7 +162,6 @@ def write_log(path_folder, name, source, time):
     f = open(path_log, 'a')
     print >>f, "{:22}   {}   {}".format(time, name, source)
     f.close()
-
 
 def update_log(path_file):
     """
@@ -178,7 +189,6 @@ def update_log(path_file):
                 f.write(line)
         f.truncate()
         f.close
-
 
 def main():
     arg_pst, arg_opt = get_argument()
@@ -214,16 +224,20 @@ def main():
                         continue
                 _delete(i)
                 # update .log file if deleted file is inside ~/.recycle_bin/
-                i_abs_path_file = os.path.abspath(i)
+                i_abs_path_file = os.path.abspath(os.path.expanduser(i))
                 if i_abs_path_file.startswith(path_recycle+'/'):
                     update_log(i_abs_path_file)
         else: # move files to recycle_bin and add time extension to files
-            if not os.path.exists(path_recycle):
-                os.mkdir(path_recycle)
-            if not os.path.exists(path_folder):
-                os.mkdir(path_folder)
             for i in __arg_pst:
-                i_abs_path_file = os.path.abspath(i)
+                # check if this file is mounted from remote.
+                if check_if_mounted_file(i):
+                    path_recycle = get_file_mount_name(i) + '/.recycle_bin'
+                    path_folder = path_recycle + '/' + str(time.year) +'_' + str(time.month)
+                if not os.path.exists(path_recycle):
+                    os.mkdir(path_recycle)
+                if not os.path.exists(path_folder):
+                    os.mkdir(path_folder)
+                i_abs_path_file = os.path.abspath(os.path.expanduser(i))
                 if i_abs_path_file == path_recycle:
                     SigExit("safe_rm: terminated.\n"
                             "Recycle bin is proteced. Use 'rm -rf' to delete")
@@ -236,6 +250,9 @@ def main():
                             print "safe_rm: cannot rm: {}, {} is a directory."\
                                     .format(dir_n, dir_n)
                             continue
+                    if get_file_name(i_abs_path_file) == '.log':
+                        print "safe_rm: cannot rm log file in the trash can."
+                        continue
                     _delete(i)
                     update_log(i_abs_path_file)
                 else: # temporaly rm file
@@ -248,9 +265,8 @@ def main():
                     name = get_file_name(i)
                     new_name = exts_time + ":" + name
                     path_new_file = path_folder + '/' + new_name
-                    _move(i, path_new_file)
                     write_log(path_folder, new_name, i_abs_path_file, time_str)
-
+                    _move(i, path_new_file)
 
 if __name__ == '__main__':
     main()
