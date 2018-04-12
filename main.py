@@ -33,7 +33,8 @@ def echo_help():
     print "{:20s}  {}".format("", "file name is required.")
     print "Optional arguments:"
     print "{:20s}  {}".format("-h --help", "show this help message and exit.")
-    print "{:20s}  {}".format("-f", "force to delete file or directory permanently.")
+    print "{:20s}  {}".format(
+        "-f", "force to delete file or directory permanently.")
     print "{:20s}  {}".format("-r", "recursively remove directory.")
 
 
@@ -245,7 +246,8 @@ def main():
                 # check if this file is mounted from remote.
                 if check_if_mounted_file(i):
                     path_recycle = get_file_mount_name(i) + '/.recycle_bin'
-                    path_folder = path_recycle + '/' + str(time.year) + '_' + str(time.month)
+                    path_folder = path_recycle + '/' + \
+                        str(time.year) + '_' + str(time.month)
                 if not os.path.exists(path_recycle):
                     os.mkdir(path_recycle)
                 if not os.path.exists(path_folder):
@@ -257,7 +259,8 @@ def main():
                 # clean recycle bin
                 # rm file which is in the recycle bin already
                 if i_abs_path_file.startswith(path_recycle+'/'):
-                    if os.path.isdir(i):  # skip a dir in recycle bin if -r not used.
+                    # skip a dir in recycle bin if -r not used.
+                    if os.path.isdir(i):
                         if '-r' not in __arg_opt:
                             dir_n = os.path.relpath(i)
                             print "safe_rm: cannot rm: {}, {} is a directory."\
@@ -269,7 +272,8 @@ def main():
                     _delete(i)
                     update_log(i_abs_path_file)
                 else:  # temporaly rm file
-                    if os.path.isdir(i):  # skip a dir in recycle bin if -r not used.
+                    # skip a dir in recycle bin if -r not used.
+                    if os.path.isdir(i):
                         if '-r' not in __arg_opt:
                             dir_n = os.path.relpath(i)
                             print "safe_rm: cannot rm: {}, {} is a directory."\
